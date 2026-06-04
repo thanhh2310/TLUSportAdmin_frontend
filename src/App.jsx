@@ -16,6 +16,7 @@ import OrdersPage from "@/pages/OrdersPage";
 import InventoryPage from "@/pages/InventoryPage";
 import UsersPage from "@/pages/UsersPage";
 import BannersPage from "@/pages/BannersPage";
+import ChatbotManagementPage from "@/pages/ChatbotManagementPage";
 
 function App() {
   const router = createBrowserRouter([
@@ -82,6 +83,10 @@ function App() {
         {
           path: "banners",
           element: <BannersPage />,
+        },
+        {
+          path: "chatbot",
+          element: <ChatbotManagementPage />,
         },
       ],
     },

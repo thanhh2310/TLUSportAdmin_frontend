@@ -18,6 +18,7 @@ import {
   ChevronDown,
   Users,
   Image,
+  MessageSquare,
 } from "lucide-react";
 import {
   NavLink,
@@ -44,6 +45,7 @@ const navItems = [
   { title: "Sản phẩm", path: "/products", icon: PackagePlus },
   { title: "Đơn hàng", path: "/orders", icon: ShoppingCart },
   { title: "Banners", path: "/banners", icon: Image },
+  { title: "Quản lý Chatbot", path: "/chatbot", icon: MessageSquare },
 ];
 
 const pageNames = {
@@ -60,6 +62,7 @@ const pageNames = {
   "/products": "Quản lý sản phẩm",
   "/orders": "Quản lý đơn hàng",
   "/banners": "Quản lý Banner",
+  "/chatbot": "Quản lý Chatbot",
 };
 
 const AdminLayout = () => {
@@ -118,6 +121,7 @@ const AdminLayout = () => {
     "/statistics",
     "/coupons",
     "/banners",
+    "/chatbot",
   ];
   if (
     role === "ROLE_STAFF" &&
