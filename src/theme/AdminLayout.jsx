@@ -122,12 +122,13 @@ const AdminLayout = () => {
     "/coupons",
     "/banners",
     "/chatbot",
+    "/users",
   ];
   if (
     role === "ROLE_STAFF" &&
     !allowedPathsForStaff.includes(location.pathname)
   ) {
-    return <Navigate to="/orders" replace />;
+    return <Navigate to="/statistics" replace />;
   }
 
   // Lọc các item hiển thị trên Sidebar
@@ -261,7 +262,9 @@ const AdminLayout = () => {
                   <h4 className="text-sm font-bold text-neutral-950 leading-tight">
                     {currentUser
                       ? `${currentUser.lastName || ""} ${currentUser.firstName || ""}`.trim()
-                      : (role === "ROLE_ADMIN" ? "Admin" : "Staff")}
+                      : role === "ROLE_ADMIN"
+                        ? "Admin"
+                        : "Staff"}
                   </h4>
                   <p className="text-xs font-medium text-neutral-500">
                     {role === "ROLE_ADMIN" ? "Quản trị viên" : "Nhân viên"}

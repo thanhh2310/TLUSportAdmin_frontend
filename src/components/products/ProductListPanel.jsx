@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { Pencil, Trash2, Search, X } from "lucide-react";
 import FormSection from "@/components/common/FormSection";
 import { formatCurrency } from "@/lib/formatCurrency";
+import { getPaginationRange } from "@/lib/utils";
 
-const ProductListPanel = ({ products, pageNumber, onEdit, onDelete, onPrevPage, onNextPage, onSearch }) => {
+const ProductListPanel = ({ products, pageNumber, totalPages = 1, setPage, onEdit, onDelete, onPrevPage, onNextPage, onSearch }) => {
   const [inputValue, setInputValue] = useState("");
 
   useEffect(() => {
@@ -81,23 +82,59 @@ const ProductListPanel = ({ products, pageNumber, onEdit, onDelete, onPrevPage, 
         </div>
 
         {/* Phân trang */}
-        <div className="mt-6 flex items-center justify-between">
-          <button
-            type="button"
-            onClick={onPrevPage}
-            className="admin-mini-button"
-          >
-            Trang trước
-          </button>
-          <span className="text-sm font-black">Trang {pageNumber}</span>
-          <button
-            type="button"
-            onClick={onNextPage}
-            className="admin-mini-button"
-          >
-            Trang sau
-          </button>
-        </div>
+        {totalPages > 1 && (
+          <div className="mt-6 flex items-center justify-between border-t border-neutral-200 pt-4 bg-white">
+            <span className="text-xs font-bold text-neutral-500">
+              Trang {pageNumber} / {totalPages}
+            </span>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                disabled={pageNumber === 1}
+                onClick={() => setPage?.((p) => Math.max(p - 1, 1)) || onPrevPage?.()}
+                className="rounded-full border border-neutral-300 bg-white px-3.5 py-2 text-xs font-bold hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              >
+                Trang trước
+              </button>
+
+              {getPaginationRange(pageNumber, totalPages).map((p, idx) => {
+                if (p === "...") {
+                  return (
+                    <span
+                      key={`dots-${idx}`}
+                      className="w-8 h-8 flex items-center justify-center text-neutral-400 select-none font-bold"
+                    >
+                      ...
+                    </span>
+                  );
+                }
+                return (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setPage?.(p)}
+                    className={`w-8 h-8 rounded-full border text-xs font-bold flex items-center justify-center transition-all duration-200 ${
+                      p === pageNumber
+                        ? "bg-neutral-950 text-white border-neutral-950"
+                        : "border-neutral-300 text-neutral-600 hover:bg-neutral-50 cursor-pointer"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                );
+              })}
+
+              <button
+                type="button"
+                disabled={pageNumber === totalPages}
+                onClick={() => setPage?.((p) => Math.min(p + 1, totalPages)) || onNextPage?.()}
+                className="rounded-full border border-neutral-300 bg-white px-3.5 py-2 text-xs font-bold hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              >
+                Trang sau
+              </button>
+            </div>
+          </div>
+        )}
       </FormSection>
     </div>
   );

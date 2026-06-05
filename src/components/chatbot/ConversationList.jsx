@@ -1,5 +1,6 @@
 import React from "react";
 import { Search, Calendar, ChevronLeft, ChevronRight, MessageSquare } from "lucide-react";
+import { getPaginationRange } from "@/lib/utils";
 
 const ConversationList = ({
   sessions,
@@ -56,12 +57,7 @@ const ConversationList = ({
       .toUpperCase();
   };
 
-  const getPageNumbers = (current, total) => {
-    if (total <= 5) return Array.from({ length: total }, (_, i) => i + 1);
-    if (current <= 3) return [1, 2, 3, "...", total];
-    if (current >= total - 2) return [1, "...", total - 2, total - 1, total];
-    return [1, "...", current - 1, current, current + 1, "...", total];
-  };
+
 
   return (
     <div className="bg-white border border-neutral-200 rounded-[2rem] p-6 shadow-sm flex flex-col h-full overflow-hidden">
@@ -195,16 +191,16 @@ const ConversationList = ({
           <ChevronLeft className="size-4 text-neutral-600" />
         </button>
 
-        {getPageNumbers(currentPage, totalPages).map((page, idx) =>
+        {getPaginationRange(currentPage, totalPages).map((page, idx) =>
           page === "..." ? (
-            <span key={`ellipsis-${idx}`} className="w-8 text-center text-sm text-neutral-400 select-none">
+            <span key={`ellipsis-${idx}`} className="w-8 text-center text-sm text-neutral-400 select-none font-bold">
               ...
             </span>
           ) : (
             <button
               key={page}
               onClick={() => setCurrentPage(page)}
-              className={`w-8 h-8 rounded-full text-xs font-bold transition-colors cursor-pointer ${
+              className={`w-8 h-8 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer ${
                 currentPage === page
                   ? "bg-blue-600 text-white"
                   : "text-neutral-600 hover:bg-neutral-100"

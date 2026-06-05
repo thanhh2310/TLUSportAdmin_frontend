@@ -1,14 +1,26 @@
 import React from "react";
 import { X, Edit3, Loader2 } from "lucide-react";
+import { getAdminRole } from "@/lib/auth";
 
 const ROLE_OPTIONS = [
   { id: "ROLE_USER", label: "Khách hàng" },
   { id: "ROLE_STAFF", label: "Nhân viên" },
-  { id: "ROLE_ADMIN", label: "Admin" },
 ];
 
-const UserEditModal = ({ isOpen, onClose, selectedUser, formData, onChange, onRoleChange, onSubmit, actionLoading }) => {
+const UserEditModal = ({
+  isOpen,
+  onClose,
+  selectedUser,
+  formData,
+  onChange,
+  onRoleChange,
+  onSubmit,
+  actionLoading,
+}) => {
   if (!isOpen || !selectedUser) return null;
+
+  const role = getAdminRole();
+  const isStaff = role === "ROLE_STAFF";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-900/60 backdrop-blur-sm">
@@ -24,12 +36,16 @@ const UserEditModal = ({ isOpen, onClose, selectedUser, formData, onChange, onRo
           <Edit3 className="text-blue-600" />
           Sửa tài khoản
         </h3>
-        <p className="text-xs font-mono font-bold text-neutral-400 mb-6">{selectedUser.email}</p>
+        <p className="text-xs font-mono font-bold text-neutral-400 mb-6">
+          {selectedUser.email}
+        </p>
 
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1.5">Họ</label>
+              <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1.5">
+                Họ
+              </label>
               <input
                 type="text"
                 name="lastName"
@@ -41,7 +57,9 @@ const UserEditModal = ({ isOpen, onClose, selectedUser, formData, onChange, onRo
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1.5">Tên</label>
+              <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1.5">
+                Tên
+              </label>
               <input
                 type="text"
                 name="firstName"
@@ -55,7 +73,9 @@ const UserEditModal = ({ isOpen, onClose, selectedUser, formData, onChange, onRo
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1.5">Số điện thoại</label>
+            <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1.5">
+              Số điện thoại
+            </label>
             <input
               type="tel"
               name="phoneNumber"
@@ -68,25 +88,29 @@ const UserEditModal = ({ isOpen, onClose, selectedUser, formData, onChange, onRo
             />
           </div>
 
-          <div>
-            <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-2">Vai trò hệ thống</label>
-            <div className="flex flex-wrap gap-2">
-              {ROLE_OPTIONS.map((roleOpt) => (
-                <button
-                  type="button"
-                  key={roleOpt.id}
-                  onClick={() => onRoleChange(roleOpt.id)}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                    formData.roles.includes(roleOpt.id)
-                      ? "bg-neutral-950 border-neutral-950 text-white"
-                      : "bg-white border-neutral-200 text-neutral-600 hover:bg-neutral-50"
-                  }`}
-                >
-                  {roleOpt.label}
-                </button>
-              ))}
+          {!isStaff && (
+            <div>
+              <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-2">
+                Vai trò hệ thống
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {ROLE_OPTIONS.map((roleOpt) => (
+                  <button
+                    type="button"
+                    key={roleOpt.id}
+                    onClick={() => onRoleChange(roleOpt.id)}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                      formData.roles.includes(roleOpt.id)
+                        ? "bg-neutral-950 border-neutral-950 text-white"
+                        : "bg-white border-neutral-200 text-neutral-600 hover:bg-neutral-50"
+                    }`}
+                  >
+                    {roleOpt.label}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="flex gap-3 pt-4">
             <button

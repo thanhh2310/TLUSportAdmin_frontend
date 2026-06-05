@@ -1,14 +1,25 @@
 import React from "react";
 import { X, UserPlus, Loader2 } from "lucide-react";
+import { getAdminRole } from "@/lib/auth";
 
 const ROLE_OPTIONS = [
   { id: "ROLE_USER", label: "Khách hàng" },
   { id: "ROLE_STAFF", label: "Nhân viên" },
-  { id: "ROLE_ADMIN", label: "Admin" },
 ];
 
-const UserCreateModal = ({ isOpen, onClose, formData, onChange, onRoleChange, onSubmit, actionLoading }) => {
+const UserCreateModal = ({
+  isOpen,
+  onClose,
+  formData,
+  onChange,
+  onRoleChange,
+  onSubmit,
+  actionLoading,
+}) => {
   if (!isOpen) return null;
+
+  const role = getAdminRole();
+  const isStaff = role === "ROLE_STAFF";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-900/60 backdrop-blur-sm">
@@ -28,7 +39,9 @@ const UserCreateModal = ({ isOpen, onClose, formData, onChange, onRoleChange, on
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1.5">Họ</label>
+              <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1.5">
+                Họ
+              </label>
               <input
                 type="text"
                 name="lastName"
@@ -40,7 +53,9 @@ const UserCreateModal = ({ isOpen, onClose, formData, onChange, onRoleChange, on
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1.5">Tên</label>
+              <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1.5">
+                Tên
+              </label>
               <input
                 type="text"
                 name="firstName"
@@ -54,7 +69,9 @@ const UserCreateModal = ({ isOpen, onClose, formData, onChange, onRoleChange, on
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1.5">Email</label>
+            <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1.5">
+              Email
+            </label>
             <input
               type="email"
               name="email"
@@ -67,7 +84,9 @@ const UserCreateModal = ({ isOpen, onClose, formData, onChange, onRoleChange, on
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1.5">Mật khẩu</label>
+            <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1.5">
+              Mật khẩu
+            </label>
             <input
               type="password"
               name="password"
@@ -80,7 +99,9 @@ const UserCreateModal = ({ isOpen, onClose, formData, onChange, onRoleChange, on
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1.5">Số điện thoại</label>
+            <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1.5">
+              Số điện thoại
+            </label>
             <input
               type="tel"
               name="phoneNumber"
@@ -93,25 +114,29 @@ const UserCreateModal = ({ isOpen, onClose, formData, onChange, onRoleChange, on
             />
           </div>
 
-          <div>
-            <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-2">Vai trò hệ thống</label>
-            <div className="flex flex-wrap gap-2">
-              {ROLE_OPTIONS.map((roleOpt) => (
-                <button
-                  type="button"
-                  key={roleOpt.id}
-                  onClick={() => onRoleChange(roleOpt.id)}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                    formData.roles.includes(roleOpt.id)
-                      ? "bg-neutral-950 border-neutral-950 text-white"
-                      : "bg-white border-neutral-200 text-neutral-600 hover:bg-neutral-50"
-                  }`}
-                >
-                  {roleOpt.label}
-                </button>
-              ))}
+          {!isStaff && (
+            <div>
+              <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-2">
+                Vai trò hệ thống
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {ROLE_OPTIONS.map((roleOpt) => (
+                  <button
+                    type="button"
+                    key={roleOpt.id}
+                    onClick={() => onRoleChange(roleOpt.id)}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                      formData.roles.includes(roleOpt.id)
+                        ? "bg-neutral-950 border-neutral-950 text-white"
+                        : "bg-white border-neutral-200 text-neutral-600 hover:bg-neutral-50"
+                    }`}
+                  >
+                    {roleOpt.label}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           <div>
             <label className="flex items-center gap-2 cursor-pointer pt-2">

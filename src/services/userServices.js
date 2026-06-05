@@ -8,6 +8,13 @@ const userServices = {
     return res.data;
   },
 
+  getUsersByRole: async (roleName, pageNumber = 1, pageSize = 10) => {
+    const res = await axiosInstance.get(
+      `/users/role/${roleName}?pageNumber=${pageNumber}&pageSize=${pageSize}`,
+    );
+    return res.data;
+  },
+
   createUser: async (payload) => {
     const res = await axiosInstance.post("/users", payload);
     return res.data;

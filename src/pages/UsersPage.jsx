@@ -7,6 +7,7 @@ import UserFilters from "@/components/users/UserFilters";
 import UsersTable from "@/components/users/UsersTable";
 import UserCreateModal from "@/components/users/UserCreateModal";
 import UserEditModal from "@/components/users/UserEditModal";
+import { getAdminRole } from "@/lib/auth";
 
 const EMPTY_FORM = {
   email: "",
@@ -19,10 +20,11 @@ const EMPTY_FORM = {
 };
 
 const UsersPage = () => {
+  const role = getAdminRole();
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [roleFilter, setRoleFilter] = useState("");
+  const [roleFilter, setRoleFilter] = useState(role === "ROLE_STAFF" ? "ROLE_USER" : "");
 
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -37,7 +39,9 @@ const UsersPage = () => {
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      const res = await userServices.getAllUsers(page, pageSize);
+      const res = roleFilter
+        ? await userServices.getUsersByRole(roleFilter, page, pageSize)
+        : await userServices.getAllUsers(page, pageSize);
       if (res && res.data) {
         setUsers(res.data.items || []);
         setTotalPages(res.data.totalPage || 1);
@@ -51,8 +55,12 @@ const UsersPage = () => {
   };
 
   useEffect(() => {
+    setPage(1);
+  }, [roleFilter]);
+
+  useEffect(() => {
     fetchUsers();
-  }, [page]);
+  }, [page, roleFilter]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;

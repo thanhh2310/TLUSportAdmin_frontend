@@ -3,6 +3,8 @@ import PageHeader from "@/components/common/PageHeader";
 import productServices from "@/services/productServices";
 import skuServices from "@/services/skuServices";
 import { toast } from "sonner";
+import { getPaginationRange } from "@/lib/utils";
+
 import {
   Search,
   ChevronDown,
@@ -413,18 +415,45 @@ const InventoryPage = () => {
               <span className="text-xs font-bold text-neutral-500">
                 Trang {page} / {totalPages}
               </span>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-1.5">
                 <button
                   disabled={page === 1}
                   onClick={() => setPage((p) => Math.max(p - 1, 1))}
-                  className="rounded-xl border border-neutral-300 bg-white px-3 py-1.5 text-xs font-bold hover:bg-neutral-50 active:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  className="rounded-full border border-neutral-300 bg-white px-3.5 py-2 text-xs font-bold hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
                 >
                   Trang trước
                 </button>
+
+                {getPaginationRange(page, totalPages).map((p, idx) => {
+                  if (p === "...") {
+                    return (
+                      <span
+                        key={`dots-${idx}`}
+                        className="w-8 h-8 flex items-center justify-center text-neutral-400 select-none font-bold"
+                      >
+                        ...
+                      </span>
+                    );
+                  }
+                  return (
+                    <button
+                      key={p}
+                      onClick={() => setPage(p)}
+                      className={`w-8 h-8 rounded-full border text-xs font-bold flex items-center justify-center transition-all duration-200 ${
+                        p === page
+                          ? "bg-neutral-950 text-white border-neutral-950"
+                          : "border-neutral-300 text-neutral-600 hover:bg-neutral-50 cursor-pointer"
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  );
+                })}
+
                 <button
                   disabled={page === totalPages}
                   onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
-                  className="rounded-xl border border-neutral-300 bg-white px-3 py-1.5 text-xs font-bold hover:bg-neutral-50 active:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  className="rounded-full border border-neutral-300 bg-white px-3.5 py-2 text-xs font-bold hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
                 >
                   Trang sau
                 </button>

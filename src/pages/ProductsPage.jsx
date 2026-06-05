@@ -46,6 +46,7 @@ const ProductsPage = () => {
   const [attributes, setAttributes] = useState([]);
   const [categories, setCategories] = useState([]);
   const [pageNumber, setPageNumber] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [editProductId, setEditProductId] = useState(null);
   const [initialSkus, setInitialSkus] = useState([]);
@@ -56,7 +57,8 @@ const ProductsPage = () => {
       const res = searchKeyword.trim()
         ? await productServices.searchProducts(searchKeyword, pageNumber, 8)
         : await productServices.getProducts(pageNumber, 8);
-      setProducts(res.data?.items);
+      setProducts(res.data?.items || []);
+      setTotalPages(res.data?.totalPage || 1);
     } catch (error) {
       console.error(error);
     }
@@ -336,6 +338,8 @@ const ProductsPage = () => {
         <ProductListPanel
           products={products}
           pageNumber={pageNumber}
+          totalPages={totalPages}
+          setPage={setPageNumber}
           onEdit={handleEditProduct}
           onDelete={handleDeleteProduct}
           onPrevPage={() => setPageNumber((p) => Math.max(1, p - 1))}
