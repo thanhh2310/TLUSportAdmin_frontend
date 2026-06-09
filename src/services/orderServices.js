@@ -8,6 +8,14 @@ const orderServices = {
     return res.data;
   },
 
+  searchOrders: async ({ orderId, paymentMethodCode, minTotal, maxTotal, page = 1, size = 10 }) => {
+    const res = await axiosInstance.get("/orders/search", {
+      params: { orderId, paymentMethodCode, minTotal, maxTotal, page, size },
+    });
+    return res.data;
+  },
+
+
   confirmOrder: async (orderId) => {
     const res = await axiosInstance.put(`/orders/${orderId}/confirm`);
     return res.data;

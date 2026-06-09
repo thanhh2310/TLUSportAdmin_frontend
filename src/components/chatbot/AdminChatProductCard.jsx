@@ -29,7 +29,9 @@ const AdminChatProductCard = ({ productId }) => {
 
   if (!product) return null;
 
-  const imageUrl = product.skus?.[0]?.images?.[0]?.imageUrl || "https://placehold.co/400x400?text=No+Image";
+  const imageUrl =
+    product.skus?.[0]?.images?.[0]?.imageUrl ||
+    "https://placehold.co/400x400?text=No+Image";
 
   return (
     <div className="flex flex-col gap-1 w-[140px] bg-white border border-neutral-100 rounded-2xl p-2 shrink-0 shadow-sm transition-transform duration-300 hover:scale-102">
@@ -44,7 +46,10 @@ const AdminChatProductCard = ({ productId }) => {
         {product.name}
       </h4>
       <p className="text-[11px] font-black text-blue-600 mt-0.5">
-        {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(product.base_price || 0)}
+        {new Intl.NumberFormat("vi-VN", {
+          style: "currency",
+          currency: "VND",
+        }).format(product.basePrice || 0)}
       </p>
     </div>
   );

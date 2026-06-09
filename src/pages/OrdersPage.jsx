@@ -8,20 +8,23 @@ import {
   Truck,
   Package,
   Clock,
-  ShoppingBag
+  ShoppingBag,
 } from "lucide-react";
 import OrderTabs from "@/components/orders/OrderTabs";
 import OrderList from "@/components/orders/OrderList";
+import OrderDetailModal from "@/components/orders/OrderDetailModal";
 import ConfirmModal from "@/components/common/ConfirmModal";
+import paymentServices from "@/services/paymentServices";
+import OrderFilter, { PRICE_RANGES } from "@/components/orders/OrderFilter";
 
 const OrdersPage = () => {
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("ALL");
   const [actionLoading, setActionLoading] = useState({});
-  const [expandedOrders, setExpandedOrders] = useState({});
   const [returnDetails, setReturnDetails] = useState({});
   const [adminNotes, setAdminNotes] = useState({});
+  const [selectedOrder, setSelectedOrder] = useState(null);
   const [confirmModal, setConfirmModal] = useState({
     isOpen: false,
     title: "Xác nhận",
@@ -29,15 +32,21 @@ const OrdersPage = () => {
     onConfirm: () => {},
     type: "primary",
   });
+  const [searchOrderId, setSearchOrderId] = useState("");
+  const [paymentMethodCode, setPaymentMethodCode] = useState("");
+  const [priceRange, setPriceRange] = useState("");
+  const [paymentMethods, setPaymentMethods] = useState([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [pageSize] = useState(10);
 
-  const triggerConfirm = (message, onConfirm, type = "primary", title = "Xác nhận hành động") => {
-    setConfirmModal({
-      isOpen: true,
-      title,
-      message,
-      onConfirm,
-      type,
-    });
+  const triggerConfirm = (
+    message,
+    onConfirm,
+    type = "primary",
+    title = "Xác nhận hành động",
+  ) => {
+    setConfirmModal({ isOpen: true, title, message, onConfirm, type });
   };
 
   const tabs = [
@@ -52,80 +61,116 @@ const OrdersPage = () => {
     { id: "CANCELLED", label: "Đã hủy", icon: XCircle },
   ];
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (pageNum = page) => {
     setIsLoading(true);
     try {
-      const res = await orderServices.getAllOrders(1, 50);
-      if (res && res.data) {
-        setOrders(res.data.items || []);
+      let res;
+      const cleanOrderId = searchOrderId.trim().replace(/^0+/, "");
+
+      if (cleanOrderId || paymentMethodCode || priceRange) {
+        const params = {
+          page: pageNum,
+          size: pageSize,
+        };
+
+        const numericOrderId = parseInt(cleanOrderId, 10);
+        if (!isNaN(numericOrderId)) {
+          params.orderId = numericOrderId;
+        }
+        if (paymentMethodCode) {
+          params.paymentMethodCode = paymentMethodCode;
+        }
+        if (priceRange) {
+          const rangeObj = PRICE_RANGES.find((r) => r.value === priceRange);
+          if (rangeObj) {
+            if (rangeObj.min !== undefined) params.minTotal = rangeObj.min;
+            if (rangeObj.max !== undefined) params.maxTotal = rangeObj.max;
+          }
+        }
+
+        res = await orderServices.searchOrders(params);
       } else {
-        setOrders([]);
+        res = await orderServices.getAllOrders(pageNum, pageSize);
       }
+      setOrders(res?.data?.items || []);
+      setTotalPages(res?.data?.totalPage || 1);
+      console.log("order", res);
     } catch (error) {
       console.error("Lỗi khi tải danh sách đơn hàng:", error);
       toast.error("Không thể tải danh sách đơn hàng");
       setOrders([]);
+      setTotalPages(1);
     } finally {
       setIsLoading(false);
     }
   };
 
+  const loadPaymentMethods = async () => {
+    try {
+      const res = await paymentServices.getActivePaymentMethods();
+      setPaymentMethods(Array.isArray(res.data) ? res.data : []);
+    } catch (error) {
+      console.error("Lỗi khi tải danh sách phương thức thanh toán:", error);
+    }
+  };
+
   useEffect(() => {
-    fetchOrders();
+    loadPaymentMethods();
   }, []);
 
-  const toggleExpandOrder = async (order) => {
-    const orderId = order.orderId;
-    const isNowExpanded = !expandedOrders[orderId];
+  useEffect(() => {
+    fetchOrders(page);
+  }, [page]);
 
-    setExpandedOrders((prev) => ({
-      ...prev,
-      [orderId]: isNowExpanded,
-    }));
+  useEffect(() => {
+    setPage(1);
+  }, [activeTab]);
 
+  const handleViewDetail = async (order) => {
+    setSelectedOrder(order);
     if (
-      isNowExpanded &&
       ["RETURN_REQUESTED", "RETURNED", "RETURN_REJECTED"].includes(
         order.orderStatus,
-      )
+      ) &&
+      !returnDetails[order.orderId]
     ) {
-      if (!returnDetails[orderId]) {
-        try {
-          const res = await orderServices.getReturnByOrderId(orderId);
-          if (res && res.data) {
-            setReturnDetails((prev) => ({ ...prev, [orderId]: res.data }));
-          }
-        } catch (error) {
-          console.error("Lỗi khi tải chi tiết yêu cầu hoàn trả:", error);
+      try {
+        const res = await orderServices.getReturnByOrderId(order.orderId);
+        if (res?.data) {
+          setReturnDetails((prev) => ({ ...prev, [order.orderId]: res.data }));
         }
+      } catch (error) {
+        console.error("Lỗi khi tải chi tiết yêu cầu hoàn trả:", error);
       }
     }
   };
 
-  const handleApproveReturn = async (orderId, returnId) => {
+  const handleApproveReturn = (orderId, returnId) => {
     triggerConfirm(
       "Bạn có chắc chắn muốn CHẤP NHẬN yêu cầu hoàn trả này và hoàn tiền cho khách hàng?",
       async () => {
         setActionLoading((prev) => ({ ...prev, [orderId]: true }));
         try {
           const adminNote = adminNotes[orderId] || "";
-          const res = await orderServices.approveReturn(returnId, { adminNote });
+          const res = await orderServices.approveReturn(returnId, {
+            adminNote,
+          });
           toast.success(res.message || "Duyệt hoàn trả thành công!", {
             position: "top-right",
           });
           setAdminNotes((prev) => {
-            const copy = { ...prev };
-            delete copy[orderId];
-            return copy;
+            const c = { ...prev };
+            delete c[orderId];
+            return c;
           });
           setReturnDetails((prev) => {
-            const copy = { ...prev };
-            delete copy[orderId];
-            return copy;
+            const c = { ...prev };
+            delete c[orderId];
+            return c;
           });
+          setSelectedOrder(null);
           fetchOrders();
         } catch (error) {
-          console.error(error);
           toast.error(
             error.response?.data?.message || "Lỗi khi duyệt hoàn trả!",
             { position: "top-right" },
@@ -135,11 +180,11 @@ const OrdersPage = () => {
         }
       },
       "danger",
-      "Chấp nhận hoàn trả"
+      "Chấp nhận hoàn trả",
     );
   };
 
-  const handleRejectReturn = async (orderId, returnId) => {
+  const handleRejectReturn = (orderId, returnId) => {
     triggerConfirm(
       "Bạn có chắc chắn muốn TỪ CHỐI yêu cầu hoàn trả này?",
       async () => {
@@ -151,18 +196,18 @@ const OrdersPage = () => {
             position: "top-right",
           });
           setAdminNotes((prev) => {
-            const copy = { ...prev };
-            delete copy[orderId];
-            return copy;
+            const c = { ...prev };
+            delete c[orderId];
+            return c;
           });
           setReturnDetails((prev) => {
-            const copy = { ...prev };
-            delete copy[orderId];
-            return copy;
+            const c = { ...prev };
+            delete c[orderId];
+            return c;
           });
+          setSelectedOrder(null);
           fetchOrders();
         } catch (error) {
-          console.error(error);
           toast.error(
             error.response?.data?.message || "Lỗi khi từ chối hoàn trả!",
             { position: "top-right" },
@@ -172,7 +217,7 @@ const OrdersPage = () => {
         }
       },
       "primary",
-      "Từ chối hoàn trả"
+      "Từ chối hoàn trả",
     );
   };
 
@@ -185,7 +230,6 @@ const OrdersPage = () => {
       });
       fetchOrders();
     } catch (error) {
-      console.error(error);
       toast.error(
         error.response?.data?.message || `Lỗi khi thực hiện: ${actionName}`,
         { position: "top-right" },
@@ -200,11 +244,12 @@ const OrdersPage = () => {
     if (method !== "CASH" && order.paymentStatus !== "PAID") {
       toast.warning(
         "Đơn hàng thanh toán trực tuyến chưa hoàn tất thanh toán!",
-        { position: "top-right" },
+        {
+          position: "top-right",
+        },
       );
       return;
     }
-
     executeAction(
       order.orderId,
       "Duyệt & Chuẩn bị đơn hàng",
@@ -231,12 +276,40 @@ const OrdersPage = () => {
   const handleCancel = (order) => {
     triggerConfirm(
       `Bạn có chắc chắn muốn hủy đơn hàng #${order.orderId}?`,
-      () => {
-        executeAction(order.orderId, "Hủy đơn hàng", orderServices.cancelOrder);
-      },
+      () =>
+        executeAction(order.orderId, "Hủy đơn hàng", orderServices.cancelOrder),
       "danger",
-      "Hủy đơn hàng"
+      "Hủy đơn hàng",
     );
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    setPage(1);
+    fetchOrders(1);
+  };
+
+  const handleReset = () => {
+    setSearchOrderId("");
+    setPaymentMethodCode("");
+    setPriceRange("");
+    setPage(1);
+
+    setIsLoading(true);
+    orderServices
+      .getAllOrders(1, pageSize)
+      .then((res) => {
+        setOrders(res?.data?.items || []);
+        setTotalPages(res?.data?.totalPage || 1);
+      })
+      .catch((err) => {
+        console.error("Lỗi khi tải lại đơn hàng:", err);
+        setOrders([]);
+        setTotalPages(1);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
   };
 
   const filteredOrders =
@@ -252,6 +325,19 @@ const OrdersPage = () => {
         description="Theo dõi luồng vận hành, duyệt, giao hàng và hủy đơn hàng trên hệ thống."
       />
 
+      {/* Bộ lọc & Tìm kiếm */}
+      <OrderFilter
+        searchOrderId={searchOrderId}
+        setSearchOrderId={setSearchOrderId}
+        paymentMethodCode={paymentMethodCode}
+        setPaymentMethodCode={setPaymentMethodCode}
+        priceRange={priceRange}
+        setPriceRange={setPriceRange}
+        paymentMethods={paymentMethods}
+        onSearch={handleSearch}
+        onReset={handleReset}
+      />
+
       <OrderTabs
         tabs={tabs}
         activeTab={activeTab}
@@ -262,19 +348,36 @@ const OrdersPage = () => {
       <OrderList
         orders={filteredOrders}
         isLoading={isLoading}
-        expandedOrders={expandedOrders}
-        toggleExpandOrder={toggleExpandOrder}
         actionLoading={actionLoading}
-        returnDetails={returnDetails}
-        adminNotes={adminNotes}
-        setAdminNotes={setAdminNotes}
-        handleApproveReturn={handleApproveReturn}
-        handleRejectReturn={handleRejectReturn}
-        handleConfirm={handleConfirm}
-        handleShip={handleShip}
-        handleDeliver={handleDeliver}
-        handleCancel={handleCancel}
+        onViewDetail={handleViewDetail}
+        onConfirm={handleConfirm}
+        onShip={handleShip}
+        onDeliver={handleDeliver}
+        onCancel={handleCancel}
+        page={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
       />
+
+      {/* Order Detail Drawer */}
+      {selectedOrder && (
+        <OrderDetailModal
+          order={selectedOrder}
+          onClose={() => setSelectedOrder(null)}
+          returnDetail={returnDetails[selectedOrder.orderId]}
+          adminNote={adminNotes[selectedOrder.orderId]}
+          onAdminNoteChange={(orderId, val) =>
+            setAdminNotes((prev) => ({ ...prev, [orderId]: val }))
+          }
+          onApproveReturn={handleApproveReturn}
+          onRejectReturn={handleRejectReturn}
+          onConfirm={handleConfirm}
+          onShip={handleShip}
+          onDeliver={handleDeliver}
+          onCancel={handleCancel}
+          loading={actionLoading[selectedOrder.orderId]}
+        />
+      )}
 
       <ConfirmModal
         {...confirmModal}

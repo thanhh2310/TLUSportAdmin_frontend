@@ -197,13 +197,13 @@ const StatisticsPage = () => {
       </div>
 
       {/* Row 2: Biểu đồ doanh thu (2/3) & Biểu đồ danh mục (1/3) */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 h-full">
+      <div className="grid gap-6 lg:grid-cols-1">
+        <div className="lg:col-span-1 h-full">
           <RevenueChart data={revenueData} days={days} onDaysChange={setDays} />
         </div>
-        <div className="lg:col-span-1 h-full">
+        {/* <div className="lg:col-span-1 h-full">
           <CategoryPieChart data={categoryRevenue} />
-        </div>
+        </div> */}
       </div>
 
       {/* Row 3: Biểu đồ tháng (1/3) & Top sản phẩm (1/3) & Biến động đơn hàng (1/3) */}
